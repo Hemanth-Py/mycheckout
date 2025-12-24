@@ -19,7 +19,7 @@ export async function POST(req: Request) {
         currency_id: 1, // Assuming INR
         registration_tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
         registration_details: {
-          [ticketId]: [
+          "176516": [
             {
               name: name,
               email_id: email,
