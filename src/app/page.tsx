@@ -1,64 +1,199 @@
-import Image from "next/image";
+"use client";
+import { useState, FormEvent, useEffect } from 'react';
+
+declare global {
+  interface Window {
+    Razorpay: any;
+  }
+}
 
 export default function Home() {
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [amount, setAmount] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState('upi');
+  const [scriptLoaded, setScriptLoaded] = useState(false);
+
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/razorpay.js';
+    script.async = true;
+    script.onload = () => setScriptLoaded(true);
+    document.body.appendChild(script);
+
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, []);
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!scriptLoaded) {
+      alert('Razorpay script not loaded yet. Please try again.');
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name, email, amount }),
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        console.error('Failed to create order:', errorData);
+        alert(`Error: ${errorData.error}. ${errorData.details?.error || ''}`);
+        return;
+      }
+
+      const orderData = await res.json();
+      const { order_id, rzp_api_key } = orderData;
+
+      const rzp = new window.Razorpay({
+        key: rzp_api_key,
+        // redirect: true, // Uncomment this for redirection flow
+      });
+
+      const paymentData = {
+        order_id: order_id,
+        amount: parseInt(amount) * 100,
+        currency: 'INR',
+        method: paymentMethod,
+        email: email,
+        contact: '9999999999', // Replace with actual contact number
+      };
+
+      rzp.createPayment(paymentData);
+
+      rzp.on('payment.success', function (response: any) {
+        alert(`Payment successful! Payment ID: ${response.razorpay_payment_id}`);
+      });
+
+      rzp.on('payment.error', function (response: any) {
+        alert(`Payment failed! Error: ${response.error.description}`);
+      });
+
+
+    } catch (error) {
+      console.error('An unexpected error occurred:', error);
+      alert('An unexpected error occurred. Please try again.');
+    }
+  };
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+      <main className="w-full max-w-md p-8 bg-white dark:bg-zinc-900 rounded-lg shadow-md">
+        <h1 className="text-3xl font-semibold text-center text-black dark:text-zinc-50 mb-6">
+          Checkout
+        </h1>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div>
+            <label
+              htmlFor="name"
+              className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
             >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+              Name
+            </label>
+            <input
+              id="name"
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+              className="mt-1 block w-full px-3 py-2 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-md shadow-sm placeholder-zinc-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+          </div>
+          <div>
+            <label
+              htmlFor="email"
+              className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+            >
+              Email
+            </label>
+            <input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="mt-1 block w-full px-3 py-2 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-md shadow-sm placeholder-zinc-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            />
+          </div>
+          <div>
+            <label
+              htmlFor="amount"
+              className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+            >
+              Order Amount (in smallest currency unit, e.g., paisa)
+            </label>
+            <input
+              id="amount"
+              type="number"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              required
+              className="mt-1 block w-full px-3 py-2 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-md shadow-sm placeholder-zinc-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+              Payment Method
+            </label>
+            <div className="mt-2 flex space-x-4">
+              <div className="flex items-center">
+                <input
+                  id="upi"
+                  name="paymentMethod"
+                  type="radio"
+                  value="upi"
+                  checked={paymentMethod === 'upi'}
+                  onChange={(e) => setPaymentMethod(e.target.value)}
+                  className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-zinc-300"
+                />
+                <label htmlFor="upi" className="ml-2 block text-sm text-zinc-900 dark:text-zinc-100">
+                  UPI
+                </label>
+              </div>
+              <div className="flex items-center">
+                <input
+                  id="card"
+                  name="paymentMethod"
+                  type="radio"
+                  value="card"
+                  checked={paymentMethod === 'card'}
+                  onChange={(e) => setPaymentMethod(e.target.value)}
+                  className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-zinc-300"
+                />
+                <label htmlFor="card" className="ml-2 block text-sm text-zinc-900 dark:text-zinc-100">
+                  Card
+                </label>
+              </div>
+              <div className="flex items-center">
+                <input
+                  id="netbanking"
+                  name="paymentMethod"
+                  type="radio"
+                  value="netbanking"
+                  checked={paymentMethod === 'netbanking'}
+                  onChange={(e) => setPaymentMethod(e.target.value)}
+                  className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-zinc-300"
+                />
+                <label htmlFor="netbanking" className="ml-2 block text-sm text-zinc-900 dark:text-zinc-100">
+                  Netbanking
+                </label>
+              </div>
+            </div>
+          </div>
+          <button
+            type="submit"
+            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
           >
-            Documentation
-          </a>
-        </div>
+            Pay
+          </button>
+        </form>
       </main>
     </div>
   );
