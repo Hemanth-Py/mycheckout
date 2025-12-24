@@ -3,9 +3,9 @@ import { NextResponse } from 'next/server';
 export async function POST(req: Request) {
   const { name, email, amount } = await req.json();
 
-  const eventId = process.env.NEXT_PUBLIC_EVENT_ID;
+  const eventId = "fd4d6cd3-03cc-4ab9-93b1-593f0a1a5ddd";
   const ticketId = process.env.NEXT_PUBLIC_TICKET_ID;
-  const apiDomain = process.env.NEXT_PUBLIC_API_DOMAIN;
+  const apiDomain = "https://dev-api.konfhub.com";
 
   try {
     // 1. Add Lead
