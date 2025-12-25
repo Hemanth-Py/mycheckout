@@ -38,14 +38,28 @@ function SuccessContent() {
                 const res = await fetch(`/api/poll/${khOrderId}`);
                 
                 if (res.status === 200) {
-                    const data = await res.json();
+                    console.log("[SuccessContent] Raw response from /api/poll:", res);
+                    let data = await res.json();
+                    if (typeof data === 'string') {
+                        try {
+                            data = JSON.parse(data);
+                        } catch (e) {
+                            console.error("Failed to parse stringified JSON:", e);
+                            setError("Failed to parse API response.");
+                            setLoading(false);
+                            return;
+                        }
+                    }
+                    console.log("[SuccessContent] Parsed data from /api/poll:", data);
                     setTicketDetails(data.message);
                     setLoading(false);
                     clearInterval(pollingTimer);
                 } else if (res.status === 404) {
+                    console.log("[SuccessContent] Poll API returned 404. Continuing polling.");
                     // Still processing, continue polling
                 } else {
                     const errorData = await res.json();
+                    console.error("[SuccessContent] Error response from /api/poll:", errorData);
                     setError(errorData.message?.error?.error_message || "An error occurred while fetching ticket details.");
                     setLoading(false);
                     clearInterval(pollingTimer);
@@ -64,18 +78,18 @@ function SuccessContent() {
     }, [khOrderId]);
 
     return (
-        <div className="flex flex-col items-center justify-center min-h-screen bg-green-50">
-            <div className="bg-white p-10 rounded-lg shadow-lg text-center">
+        <div className="flex flex-col items-center justify-center min-h-screen bg-zinc-50 dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100">
+            <div className="bg-white dark:bg-zinc-800 p-10 rounded-lg shadow-lg text-center">
                 {loading && (
                     <>
-                        <h1 className="text-3xl font-bold text-gray-800 mb-4">Processing your ticket...</h1>
-                        <p className="text-gray-600">Please wait while we fetch your ticket details.</p>
+                        <h1 className="text-3xl font-bold text-zinc-800 dark:text-zinc-200 mb-4">Processing your ticket...</h1>
+                        <p className="text-zinc-600 dark:text-zinc-400">Please wait while we fetch your ticket details.</p>
                     </>
                 )}
                 {error && (
                     <>
-                        <h1 className="text-3xl font-bold text-red-600 mb-4">Error</h1>
-                        <p className="text-gray-700 mb-6">{error}</p>
+                        <h1 className="text-3xl font-bold text-red-600 dark:text-red-400 mb-4">Error</h1>
+                        <p className="text-zinc-700 dark:text-zinc-300 mb-6">{error}</p>
                         <button
                             onClick={() => router.push('/')}
                             className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
@@ -86,17 +100,17 @@ function SuccessContent() {
                 )}
                 {ticketDetails && (
                     <>
-                        <h1 className="text-3xl font-bold text-green-600 mb-4">Payment Successful!</h1>
+                        <h1 className="text-3xl font-bold text-green-600 dark:text-green-400 mb-4">Payment Successful!</h1>
                         <div className="text-left">
-                            <p><strong>Message:</strong> {ticketDetails.message}</p>
-                            <p><strong>Booking IDs:</strong> {ticketDetails.booking_id.join(', ')}</p>
-                            {Object.keys(ticketDetails.url).map(key => {
+                            {ticketDetails.message && <p><strong>Message:</strong> {ticketDetails.message}</p>}
+                            {Array.isArray(ticketDetails.booking_id) && <p><strong>Booking IDs:</strong> {ticketDetails.booking_id.join(', ')}</p>}
+                            {ticketDetails.url && Object.keys(ticketDetails.url).map(key => {
                                 if(key !== 'zip' && key !== 'bulk_invoice') {
                                     return (
-                                        <div key={key} className="my-4 p-4 border rounded-md">
+                                        <div key={key} className="my-4 p-4 border border-zinc-200 dark:border-zinc-700 rounded-md">
                                             <p><strong>Name:</strong> {ticketDetails.url[key].name}</p>
                                             <p><strong>Ticket Name:</strong> {ticketDetails.url[key].ticket_name}</p>
-                                            <a href={ticketDetails.url[key].ticket} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">View Ticket</a>
+                                            <a href={ticketDetails.url[key].ticket} target="_blank" rel="noopener noreferrer" className="text-blue-500 dark:text-blue-400 hover:underline">View Ticket</a>
                                         </div>
                                     )
                                 }
