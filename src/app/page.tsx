@@ -68,7 +68,7 @@ export default function Home() {
               name: 'Pay via UPI',
               instruments: [
                 {
-                  method: 'upi'
+                  method: 'upi',
                   apps: []
                 }
               ]
