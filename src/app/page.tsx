@@ -1,5 +1,6 @@
 "use client";
 import { useState, FormEvent, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 declare global {
   interface Window {
@@ -14,6 +15,7 @@ export default function Home() {
   const [paymentMethod, setPaymentMethod] = useState('upi');
   const [scriptLoaded, setScriptLoaded] = useState(false);
   const [loading, setLoading] = useState(false); // New state for loading indicator
+  const router = useRouter();
 
   // Card details
   const [cardNumber, setCardNumber] = useState('');
@@ -70,7 +72,7 @@ export default function Home() {
 
       const rzp = new window.Razorpay({
         key: rzp_api_key,
-        redirect: true,
+        redirect: false,
       });
 
       let paymentData: any = {
@@ -100,13 +102,13 @@ export default function Home() {
       rzp.createPayment(paymentData);
 
       rzp.on('payment.success', function (response: any) {
-        alert(`Payment successful! Payment ID: ${response.razorpay_payment_id}`);
-        setLoading(false); // Stop loading on success
+        setLoading(false);
+        router.push(`/payment/success?order_id=${order_id}`);
       });
 
       rzp.on('payment.error', function (response: any) {
-        alert(`Payment failed! Error: ${response.error.description}`);
-        setLoading(false); // Stop loading on error
+        setLoading(false);
+        router.push(`/payment/failure?error=${response.error.description}`);
       });
 
 
