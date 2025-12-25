@@ -70,7 +70,7 @@ export default function Home() {
 
       const rzp = new window.Razorpay({
         key: rzp_api_key,
-        // redirect: true, // Uncomment this for redirection flow
+        redirect: true,
       });
 
       let paymentData: any = {
