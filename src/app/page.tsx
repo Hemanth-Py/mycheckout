@@ -80,7 +80,6 @@ export default function Home() {
         method: paymentMethod,
         email: email,
         contact: '9999999999', // Replace with actual contact number
-        callback_url: "https://hemanth-py.github.io/iframetest/",
       };
 
       if (paymentMethod === 'card') {
