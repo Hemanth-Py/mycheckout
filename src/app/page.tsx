@@ -68,7 +68,7 @@ export default function Home() {
       }
 
       const orderData = await res.json();
-      const { order_id, rzp_api_key, order_amount } = orderData;
+      const { order_id, rzp_api_key, order_amount, kh_order_id } = orderData;
 
       const rzp = new window.Razorpay({
         key: rzp_api_key,
@@ -103,7 +103,7 @@ export default function Home() {
 
       rzp.on('payment.success', function (response: any) {
         setLoading(false);
-        router.push(`/payment/success?order_id=${order_id}`);
+        router.push(`/payment/success?kh_order_id=${kh_order_id}`);
       });
 
       rzp.on('payment.error', function (response: any) {
