@@ -61,19 +61,26 @@ export default function Home() {
           name: name,
           email: email,
       },
+      config: {
+        display: {
+          preferences: {
+            show_default_blocks: false,
+          },
+        },
+      },
+      methods: {
+        card: false,
+        netbanking: false,
+        wallet: false,
+        upi: true,
+        emi: false,
+        paylater: false,
+      },
       modal: {
           ondismiss: function(){
               setLoading(false);
           }
-      },
-      config: {
-        display: {
-          preferences: { show_default_blocks: true }
-        },
-        // ⚠️ Not guaranteed in all iOS browsers
-        disable_upi_apps: true
-      },
-
+      }
     };
     
     const rzp = new window.Razorpay(options);
