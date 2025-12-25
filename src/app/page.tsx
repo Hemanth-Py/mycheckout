@@ -69,7 +69,7 @@ export default function Home() {
               instruments: [
                 {
                   method: 'upi',
-                  apps: []
+                  flows: ['collect']
                 }
               ]
             }
