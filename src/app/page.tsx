@@ -61,18 +61,14 @@ export default function Home() {
           name: name,
           email: email,
       },
-      config: {
-        display: {
-          preferences: {
-            show_default_blocks: false,
-          },
-        },
-      },
       methods: {
         card: false,
         netbanking: false,
         wallet: false,
-        upi: true,
+        upi: {
+          flows: ['collect'],
+          apps: [],
+        },
         emi: false,
         paylater: false,
       },
