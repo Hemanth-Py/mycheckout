@@ -52,6 +52,7 @@ export default function Home() {
       name: "My Checkout App",
       description: "Test Transaction",
       order_id: order_id,
+
       handler: function (response: any){
           setLoading(false);
           router.push(`/payment/success?kh_order_id=${kh_order_id}&payment_id=${response.razorpay_payment_id}`);
@@ -64,7 +65,15 @@ export default function Home() {
           ondismiss: function(){
               setLoading(false);
           }
-      }
+      },
+      config: {
+        display: {
+          preferences: { show_default_blocks: true }
+        },
+        // ⚠️ Not guaranteed in all iOS browsers
+        disable_upi_apps: true
+      },
+
     };
     
     const rzp = new window.Razorpay(options);
