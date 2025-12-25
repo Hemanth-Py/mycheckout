@@ -14,7 +14,7 @@ export async function GET(
 
     try {
         // This should be an environment variable, but for now I will hardcode it
-        const pollerApiUrl = `https://dev-regional-api.konfhub.com/event/${kh_order_id}/status`;
+        const pollerApiUrl = `https://regional-api.konfhub.com/event/${kh_order_id}/status`;
         console.log(`[Poll API] Fetching from: ${pollerApiUrl}`);
         const res = await fetch(pollerApiUrl);
         console.log(`[Poll API] Response status from Konfhub: ${res.status}`);
