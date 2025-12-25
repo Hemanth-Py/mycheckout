@@ -45,7 +45,9 @@ export default function Home() {
 
   const handleStandardCheckout = (orderData: any) => {
     const { order_id, rzp_api_key, order_amount, kh_order_id } = orderData;
-    const options = {
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+
+    let options: any = {
       key: rzp_api_key,
       amount: order_amount * 100,
       currency: "INR",
@@ -61,7 +63,15 @@ export default function Home() {
           name: name,
           email: email,
       },
-      config: {
+      modal: {
+          ondismiss: function(){
+              setLoading(false);
+          }
+      }
+    };
+
+    if (isIOS) {
+      options.config = {
         display: {
           blocks: {
             banks: {
@@ -69,7 +79,7 @@ export default function Home() {
               instruments: [
                 {
                   method: 'upi',
-                  flows: ['collect']
+                  flows: ['collect', 'qr']
                 }
               ]
             }
@@ -79,13 +89,8 @@ export default function Home() {
             show_default_blocks: false
           }
         }
-      },
-      modal: {
-          ondismiss: function(){
-              setLoading(false);
-          }
-      }
-    };
+      };
+    }
     
     const rzp = new window.Razorpay(options);
     rzp.open();
