@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(
     request: NextRequest,
-    { params }: { params: { orderId: string } }
+    context: { params: Promise<{ orderId: string }> }
 ) {
-    const orderId = params.orderId;
+    const { orderId } = await context.params;
 
     if (!orderId) {
         return NextResponse.json({ message: 'Order ID is required' }, { status: 400 });

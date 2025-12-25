@@ -1,6 +1,6 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   const { name, email, amount } = await req.json();
 
   const eventId = "fd4d6cd3-03cc-4ab9-93b1-593f0a1a5ddd";
