@@ -6,13 +6,13 @@ import { useEffect, useState, Suspense } from 'react';
 function SuccessContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
-    const orderId = searchParams.get('order_id');
+    const khOrderId = searchParams.get('kh_order_id');
     const [ticketDetails, setTicketDetails] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        if (!orderId) {
+        if (!khOrderId) {
             setError("Order ID not found.");
             setLoading(false);
             return;
@@ -35,7 +35,7 @@ function SuccessContent() {
                 // The API endpoint needs to be proxied through the Next.js app
                 // to avoid CORS issues. I will assume a proxy is set up at /api/poll.
                 // I will create this proxy later.
-                const res = await fetch(`/api/poll/${orderId}`);
+                const res = await fetch(`/api/poll/${khOrderId}`);
                 
                 if (res.status === 200) {
                     const data = await res.json();
@@ -61,7 +61,7 @@ function SuccessContent() {
         pollApi(); // Initial call
 
         return () => clearInterval(pollingTimer);
-    }, [orderId]);
+    }, [khOrderId]);
 
     return (
         <div className="flex flex-col items-center justify-center min-h-screen bg-green-50">
