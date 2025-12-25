@@ -13,7 +13,7 @@ export default function Home() {
   const [email, setEmail] = useState('');
   const [amount, setAmount] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('upi');
-  const [scriptLoaded, setScriptLoaded] = useState(false);
+  const [checkoutFlow, setCheckoutFlow] = useState('standard');
   const [loading, setLoading] = useState(false); // New state for loading indicator
   const router = useRouter();
 
@@ -29,26 +29,107 @@ export default function Home() {
   // Wallet details
   const [wallet, setWallet] = useState('');
 
-  useEffect(() => {
-    const script = document.createElement('script');
-    script.src = 'https://checkout.razorpay.com/v1/razorpay.js';
-    script.async = true;
-    script.onload = () => setScriptLoaded(true);
-    document.body.appendChild(script);
+  const loadScript = (src: string) => {
+    return new Promise((resolve) => {
+        const script = document.createElement('script');
+        script.src = src;
+        script.onload = () => {
+            resolve(true);
+        };
+        script.onerror = () => {
+            resolve(false);
+        };
+        document.body.appendChild(script);
+    });
+  };
 
-    return () => {
-      document.body.removeChild(script);
+  const handleStandardCheckout = (orderData: any) => {
+    const { order_id, rzp_api_key, order_amount, kh_order_id } = orderData;
+    const options = {
+      key: rzp_api_key,
+      amount: order_amount * 100,
+      currency: "INR",
+      name: "My Checkout App",
+      description: "Test Transaction",
+      order_id: order_id,
+      handler: function (response: any){
+          setLoading(false);
+          router.push(`/payment/success?kh_order_id=${kh_order_id}&payment_id=${response.razorpay_payment_id}`);
+      },
+      prefill: {
+          name: name,
+          email: email,
+      },
+      modal: {
+          ondismiss: function(){
+              setLoading(false);
+          }
+      }
     };
-  }, []);
+    
+    const rzp = new window.Razorpay(options);
+    rzp.open();
+  };
+
+  const handleCustomCheckout = (orderData: any) => {
+    const { order_id, rzp_api_key, order_amount, kh_order_id } = orderData;
+    const rzp = new window.Razorpay({
+      key: rzp_api_key,
+      redirect: false,
+    });
+
+    let paymentData: any = {
+      order_id: order_id,
+      amount: order_amount * 100,
+      currency: 'INR',
+      method: paymentMethod,
+      email: email,
+      contact: '9999999999', // Replace with actual contact number
+    };
+
+    if (paymentMethod === 'card') {
+      const [expiry_month, expiry_year] = cardExpiry.split('/');
+      paymentData.card = {
+        number: cardNumber,
+        expiry_month: expiry_month.trim(),
+        expiry_year: expiry_year.trim(),
+        cvv: cardCvv,
+        name: cardName,
+      };
+    } else if (paymentMethod === 'netbanking') {
+      paymentData.bank = bankCode;
+    } else if (paymentMethod === 'wallet') {
+      paymentData.wallet = wallet;
+    }
+
+    rzp.createPayment(paymentData);
+
+    rzp.on('payment.success', function (response: any) {
+      setLoading(false);
+      router.push(`/payment/success?kh_order_id=${kh_order_id}`);
+    });
+
+    rzp.on('payment.error', function (response: any) {
+      setLoading(false);
+      router.push(`/payment/failure?error=${response.error.description}`);
+    });
+  };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!scriptLoaded) {
-      alert('Razorpay script not loaded yet. Please try again.');
-      return;
-    }
+    setLoading(true);
 
-    setLoading(true); // Start loading
+    const scriptSrc = checkoutFlow === 'standard' 
+        ? 'https://checkout.razorpay.com/v1/checkout.js' 
+        : 'https://checkout.razorpay.com/v1/razorpay.js';
+
+    const res = await loadScript(scriptSrc);
+
+    if (!res) {
+        alert('Razorpay SDK failed to load. Are you online?');
+        setLoading(false);
+        return;
+    }
 
     try {
       const res = await fetch('/api/checkout', {
@@ -63,59 +144,22 @@ export default function Home() {
         const errorData = await res.json();
         console.error('Failed to create order:', errorData);
         alert(`Error: ${errorData.error}. ${errorData.details?.error || ''}`);
-        setLoading(false); // Stop loading on error
+        setLoading(false);
         return;
       }
 
       const orderData = await res.json();
-      const { order_id, rzp_api_key, order_amount, kh_order_id } = orderData;
 
-      const rzp = new window.Razorpay({
-        key: rzp_api_key,
-        redirect: false,
-      });
-
-      let paymentData: any = {
-        order_id: order_id,
-        amount: order_amount * 100,
-        currency: 'INR',
-        method: paymentMethod,
-        email: email,
-        contact: '9999999999', // Replace with actual contact number
-      };
-
-      if (paymentMethod === 'card') {
-        const [expiry_month, expiry_year] = cardExpiry.split('/');
-        paymentData.card = {
-          number: cardNumber,
-          expiry_month: expiry_month.trim(),
-          expiry_year: expiry_year.trim(),
-          cvv: cardCvv,
-          name: cardName,
-        };
-      } else if (paymentMethod === 'netbanking') {
-        paymentData.bank = bankCode;
-      } else if (paymentMethod === 'wallet') {
-        paymentData.wallet = wallet;
+      if (checkoutFlow === 'standard') {
+        handleStandardCheckout(orderData);
+      } else {
+        handleCustomCheckout(orderData);
       }
-
-      rzp.createPayment(paymentData);
-
-      rzp.on('payment.success', function (response: any) {
-        setLoading(false);
-        router.push(`/payment/success?kh_order_id=${kh_order_id}`);
-      });
-
-      rzp.on('payment.error', function (response: any) {
-        setLoading(false);
-        router.push(`/payment/failure?error=${response.error.description}`);
-      });
-
 
     } catch (error) {
       console.error('An unexpected error occurred:', error);
       alert('An unexpected error occurred. Please try again.');
-      setLoading(false); // Stop loading on unexpected error
+      setLoading(false);
     }
   };
 
@@ -234,6 +278,42 @@ export default function Home() {
                 />
                 <label htmlFor="wallet" className="ml-2 block text-sm text-zinc-900 dark:text-zinc-100">
                   Wallet
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+              Checkout Flow
+            </label>
+            <div className="mt-2 flex space-x-4">
+              <div className="flex items-center">
+                <input
+                  id="standard"
+                  name="checkoutFlow"
+                  type="radio"
+                  value="standard"
+                  checked={checkoutFlow === 'standard'}
+                  onChange={(e) => setCheckoutFlow(e.target.value)}
+                  className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-zinc-300"
+                />
+                <label htmlFor="standard" className="ml-2 block text-sm text-zinc-900 dark:text-zinc-100">
+                  Standard (Modal)
+                </label>
+              </div>
+              <div className="flex items-center">
+                <input
+                  id="custom"
+                  name="checkoutFlow"
+                  type="radio"
+                  value="custom"
+                  checked={checkoutFlow === 'custom'}
+                  onChange={(e) => setCheckoutFlow(e.target.value)}
+                  className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-zinc-300"
+                />
+                <label htmlFor="custom" className="ml-2 block text-sm text-zinc-900 dark:text-zinc-100">
+                  Custom (Popup)
                 </label>
               </div>
             </div>
