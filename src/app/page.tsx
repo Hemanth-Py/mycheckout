@@ -13,6 +13,7 @@ export default function Home() {
   const [amount, setAmount] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('upi');
   const [scriptLoaded, setScriptLoaded] = useState(false);
+  const [loading, setLoading] = useState(false); // New state for loading indicator
 
   // Card details
   const [cardNumber, setCardNumber] = useState('');
@@ -45,6 +46,8 @@ export default function Home() {
       return;
     }
 
+    setLoading(true); // Start loading
+
     try {
       const res = await fetch('/api/checkout', {
         method: 'POST',
@@ -58,6 +61,7 @@ export default function Home() {
         const errorData = await res.json();
         console.error('Failed to create order:', errorData);
         alert(`Error: ${errorData.error}. ${errorData.details?.error || ''}`);
+        setLoading(false); // Stop loading on error
         return;
       }
 
@@ -97,16 +101,19 @@ export default function Home() {
 
       rzp.on('payment.success', function (response: any) {
         alert(`Payment successful! Payment ID: ${response.razorpay_payment_id}`);
+        setLoading(false); // Stop loading on success
       });
 
       rzp.on('payment.error', function (response: any) {
         alert(`Payment failed! Error: ${response.error.description}`);
+        setLoading(false); // Stop loading on error
       });
 
 
     } catch (error) {
       console.error('An unexpected error occurred:', error);
       alert('An unexpected error occurred. Please try again.');
+      setLoading(false); // Stop loading on unexpected error
     }
   };
 
@@ -238,6 +245,7 @@ export default function Home() {
                 placeholder="Card Number"
                 value={cardNumber}
                 onChange={(e) => setCardNumber(e.target.value)}
+                required
                 className="mt-1 block w-full px-3 py-2 bg-white dark:bg-zinc-700 border border-zinc-300 dark:border-zinc-600 rounded-md shadow-sm placeholder-zinc-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
               />
               <input
@@ -245,6 +253,7 @@ export default function Home() {
                 placeholder="Cardholder Name"
                 value={cardName}
                 onChange={(e) => setCardName(e.target.value)}
+                required
                 className="mt-1 block w-full px-3 py-2 bg-white dark:bg-zinc-700 border border-zinc-300 dark:border-zinc-600 rounded-md shadow-sm placeholder-zinc-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
               />
               <div className="flex space-x-4">
@@ -253,6 +262,7 @@ export default function Home() {
                   placeholder="MM/YY"
                   value={cardExpiry}
                   onChange={(e) => setCardExpiry(e.target.value)}
+                  required
                   className="mt-1 block w-full px-3 py-2 bg-white dark:bg-zinc-700 border border-zinc-300 dark:border-zinc-600 rounded-md shadow-sm placeholder-zinc-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                 />
                 <input
@@ -260,6 +270,7 @@ export default function Home() {
                   placeholder="CVV"
                   value={cardCvv}
                   onChange={(e) => setCardCvv(e.target.value)}
+                  required
                   className="mt-1 block w-full px-3 py-2 bg-white dark:bg-zinc-700 border border-zinc-300 dark:border-zinc-600 rounded-md shadow-sm placeholder-zinc-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                 />
               </div>
@@ -274,6 +285,7 @@ export default function Home() {
                 placeholder="Enter Bank Code (e.g., HDFC, SBIN)"
                 value={bankCode}
                 onChange={(e) => setBankCode(e.target.value)}
+                required
                 className="mt-1 block w-full px-3 py-2 bg-white dark:bg-zinc-700 border border-zinc-300 dark:border-zinc-600 rounded-md shadow-sm placeholder-zinc-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
               />
             </div>
@@ -287,6 +299,7 @@ export default function Home() {
                 placeholder="Enter Wallet Code (e.g., paytm, phonepe)"
                 value={wallet}
                 onChange={(e) => setWallet(e.target.value)}
+                required
                 className="mt-1 block w-full px-3 py-2 bg-white dark:bg-zinc-700 border border-zinc-300 dark:border-zinc-600 rounded-md shadow-sm placeholder-zinc-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
               />
             </div>
@@ -296,8 +309,9 @@ export default function Home() {
           <button
             type="submit"
             className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            disabled={loading} // Disable button when loading
           >
-            Pay
+            {loading ? 'Processing...' : 'Pay'}
           </button>
         </form>
       </main>
