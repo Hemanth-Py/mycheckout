@@ -23,6 +23,7 @@ export async function POST(req: Request) {
             {
               name: name,
               email_id: email,
+              donation_price: parseInt(amount),
             },
           ],
         },
@@ -46,6 +47,7 @@ export async function POST(req: Request) {
       body: JSON.stringify({
         kh_order_id: khOrderId,
         order_amount: parseInt(amount),
+        donation_price: parseInt(amount),
         currency_id: 1,
         payment_method: 1, // Assuming UPI
       }),
