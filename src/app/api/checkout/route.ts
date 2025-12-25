@@ -6,9 +6,9 @@ export async function POST(req: NextRequest) {
   const { name, email, amount } = body;
   console.log('[Checkout API] Request body:', body);
 
-  const eventId = "68cfeb2f-458a-407c-89a4-271297d90932";
+  const eventId = "fd4d6cd3-03cc-4ab9-93b1-593f0a1a5ddd";
   const ticketId = process.env.NEXT_PUBLIC_TICKET_ID;
-  const apiDomain = "https://api.konfhub.com";
+  const apiDomain = "https://dev-api.konfhub.com";
 
   try {
     // 1. Add Lead
@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
       currency_id: 1, // Assuming INR
       registration_tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
       registration_details: {
-        "69683": [
+        "176516": [
           {
             name: name,
             email_id: email,
