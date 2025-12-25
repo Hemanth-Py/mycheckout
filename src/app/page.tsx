@@ -61,16 +61,23 @@ export default function Home() {
           name: name,
           email: email,
       },
-      methods: {
-        card: false,
-        netbanking: false,
-        wallet: false,
-        upi: {
-          flows: ['collect'],
-          apps: [],
-        },
-        emi: false,
-        paylater: false,
+      config: {
+        display: {
+          blocks: {
+            banks: {
+              name: 'Pay via UPI',
+              instruments: [
+                {
+                  method: 'upi'
+                }
+              ]
+            }
+          },
+          sequence: ['block.banks'],
+          preferences: {
+            show_default_blocks: false
+          }
+        }
       },
       modal: {
           ondismiss: function(){
